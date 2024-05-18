@@ -32,8 +32,18 @@ public class BooksController : ControllerBase
         {
             return BadRequest();
         }
+
+        var books = await _dbContext.Books.Where(x => x.UserId == user.Id && x.IsFavourite).Select(x =>
+            new SaveBookToFavourite()
+            {
+                Title = x.Title,
+                Author = x.Author,
+                Rate = x.Rate,
+                Price = x.Price,
+                IsFavourite = x.IsFavourite,
+                userEmail = user.Email
+            }).ToListAsync();
         
-        var books = await _dbContext.Books.Where(b => b.UserId == user.Id.ToString()).ToListAsync();
         return Ok(books);
     }
 
