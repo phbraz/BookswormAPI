@@ -53,7 +53,7 @@ public class AuthController : ControllerBase
             
         var token = new JwtSecurityToken(
             issuer: _settings.Value.TokenIssuer, 
-            audience: "All",
+            audience: _settings.Value.TokenIssuer,
             expires: DateTime.UtcNow.AddHours(3),
             claims: authClaims,
             signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
