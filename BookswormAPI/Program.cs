@@ -26,6 +26,14 @@ builder.Services.AddIdentityApiEndpoints<IdentityUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
+builder.Services.AddCors(opt =>
+{
+    opt.AddPolicy("AllowOrigin", corsBuilder =>
+        corsBuilder.WithOrigins("http://localhost:5173")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+    );
+});
 
 var app = builder.Build();
 
@@ -39,6 +47,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseRouting();
+app.UseCors("AllowOrigin");
 app.UseAuthentication();
 app.UseAuthorization();
 

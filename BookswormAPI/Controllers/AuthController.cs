@@ -58,10 +58,16 @@ public class AuthController : ControllerBase
             claims: authClaims,
             signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
         );
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var tokenString = tokenHandler.WriteToken(token);
+
+        var response = new LoginResponse()
+        {
+            Token = tokenString,
+            ValidTo = token.ValidTo
+        };
             
-        return Ok(new {
-            token = new JwtSecurityTokenHandler().WriteToken(token),
-            expiration = token.ValidTo
-        });
+        return Ok(response);
     }
 }
