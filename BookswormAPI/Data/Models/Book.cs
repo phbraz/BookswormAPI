@@ -13,6 +13,9 @@ public class Book
 
     [Required]
     public string Title { get; set; }
+    
+    [Required]
+    public string Author { get; set; }
 
     [Range(0, 5)]
     public int Rate { get; set; }
