@@ -1,4 +1,5 @@
 using BookswormAPI.Data.Models;
+using BookswormAPI.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -11,4 +12,6 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     { }
     
     public DbSet<Book> Books { get; set; }
+    public DbSet<UserFavouriteBook> UserFavouriteBooks { get; set; }
+    
 }

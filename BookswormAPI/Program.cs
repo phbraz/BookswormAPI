@@ -1,6 +1,7 @@
 using System.Text;
 using BookswormAPI.Configuration;
 using BookswormAPI.Data;
+using BookswormAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -27,8 +28,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(opt =>
 builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<IdentityUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddScoped<DatabaseInit>();
+builder.Services.AddTransient<ExternalApiService>();
+builder.Services.AddHttpClient();
+builder.Services.AddTransient<DataSeed>();
 
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
+builder.Services.Configure<NewYorkTimesApi>(builder.Configuration.GetSection("NewYorkTimesApi"));
 builder.Services.AddCors(opt =>
 {
     opt.AddPolicy("AllowOrigin", corsBuilder =>
@@ -59,6 +65,12 @@ builder.Services.AddAuthentication(opt =>
     });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var databaseInit = scope.ServiceProvider.GetRequiredService<DatabaseInit>();
+    await databaseInit.DataSeedingAsync();
+}
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())

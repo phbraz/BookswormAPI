@@ -27,24 +27,7 @@ public class BooksController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> FavouriteBooksByUser([FromBody] LoginModel loginModel)
     {
-        var user = await _userManager.FindByEmailAsync(loginModel.Email);
-        if (user == null)
-        {
-            return BadRequest();
-        }
-
-        var books = await _dbContext.Books.Where(x => x.UserId == user.Id && x.IsFavourite).Select(x =>
-            new SaveBookToFavourite()
-            {
-                Title = x.Title,
-                Author = x.Author,
-                Rate = x.Rate,
-                Price = x.Price,
-                IsFavourite = x.IsFavourite,
-                userEmail = user.Email
-            }).ToListAsync();
-        
-        return Ok(books);
+        return Ok();
     }
 
     [HttpPost]
@@ -57,31 +40,6 @@ public class BooksController : ControllerBase
             return BadRequest();
         }
         
-        var existingBook = await _dbContext.Books.FirstOrDefaultAsync(b => b.Title == saveBookToFavourite.Title && b.Author == saveBookToFavourite.Author && b.UserId == user.Id.ToString());
-        
-        if (existingBook != null)
-        {
-            existingBook.Rate = saveBookToFavourite.Rate;
-            existingBook.Price = saveBookToFavourite.Price;
-            existingBook.IsFavourite = saveBookToFavourite.IsFavourite;
-            _dbContext.Books.Update(existingBook);
-        }
-        else
-        {
-            var book = new Book()
-            {
-                Title = saveBookToFavourite.Title,
-                Author = saveBookToFavourite.Author,
-                Rate = saveBookToFavourite.Rate,
-                Price = saveBookToFavourite.Price,
-                IsFavourite = saveBookToFavourite.IsFavourite,
-                UserId = user.Id.ToString()
-            };
-            _dbContext.Books.Add(book);
-        }
-
-        await _dbContext.SaveChangesAsync();
-        
-        return Ok(saveBookToFavourite);
+        return Ok();
     }
 }
