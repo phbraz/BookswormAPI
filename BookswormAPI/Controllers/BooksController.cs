@@ -35,22 +35,20 @@ public class BooksController : ControllerBase
             return BadRequest();
         }
         
-        var favouriteBooks = await _dbContext.UserFavouriteBooks.Include(x => x.Book)
+        var favouriteBooksIds = await _dbContext.UserFavouriteBooks.Include(x => x.Book)
             .Where(x => x.UserId == user.Id)
-            .Select(x => new FavouriteBook()
-            {
-                BookId = x.BookId
-            })
+            .Select(x => x.BookId)
             .ToListAsync();
 
         var result = await _dbContext.Books.Select(x => new BookResponse()
         {
+            Id = x.Id,
             Title = x.Title,
             Author = x.Author,
             Price = x.Price,
             Contributor = x.contributor,
             BookImage = x.BookImage,
-            IsFavourite = favouriteBooks.Exists(f => f.BookId == x.Id),
+            IsFavourite = favouriteBooksIds.Contains(x.Id),
         }).ToListAsync();
         
         return Ok(result);
@@ -75,15 +73,16 @@ public class BooksController : ControllerBase
 
         var favouriteBooks = await _dbContext.UserFavouriteBooks
             .Include(x => x.Book).Where(x => x.UserId == user.Id)
-            .Select(x => new FavouriteBook()
+            .Select(x => new BookResponse()
             {
-                BookId = x.BookId,
+                Id = x.BookId,
                 Title = x.Book.Title,
                 Author = x.Book.Author,
                 Contributor = x.Book.contributor,
                 Price = x.Book.Price,
                 Rate = x.Rate,
-                BookImage = x.Book.BookImage
+                BookImage = x.Book.BookImage,
+                IsFavourite = true
             }).ToListAsync();
         
         return Ok(favouriteBooks);
@@ -102,15 +101,16 @@ public class BooksController : ControllerBase
         var favouriteBooks = await _dbContext.UserFavouriteBooks.Include(x => x.Book)
             .Where(x => x.UserId == user.Id && (x.Book.Title.Contains(searchBook.UserQuery) ||
                                                 x.Book.Author.Contains(searchBook.UserQuery)))
-            .Select(x => new FavouriteBook()
+            .Select(x => new BookResponse()
             {
-                BookId = x.BookId,
+                Id = x.BookId,
                 Title = x.Book.Title,
                 Author = x.Book.Author,
                 Contributor = x.Book.contributor,
                 Price = x.Book.Price,
                 Rate = x.Rate,
-                BookImage = x.Book.BookImage
+                BookImage = x.Book.BookImage,
+                IsFavourite = true
             })
             .ToListAsync();
 
@@ -126,11 +126,14 @@ public class BooksController : ControllerBase
         {
             return BadRequest();
         }
-        var book = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == addBookToFavourite.BookId);
+        var book = await _dbContext.UserFavouriteBooks.FirstOrDefaultAsync(b => b.BookId == addBookToFavourite.BookId);
 
         if (book != null)
         {
-            return Ok("Book Already in your favourites");
+            return Ok(new
+            {
+                Message = "Saved to favourites"
+            });
         }
         
         var userFavouriteBook = new UserFavouriteBook()
@@ -141,7 +144,10 @@ public class BooksController : ControllerBase
         _dbContext.UserFavouriteBooks.Add(userFavouriteBook);
         await _dbContext.SaveChangesAsync();
 
-        return Ok("Book saved to favourites");
+        return Ok(new
+        {
+            Message = "Saved to favourites"
+        });
     }
 
     [HttpPost]
