@@ -40,16 +40,25 @@ public class BooksController : ControllerBase
             .Select(x => x.BookId)
             .ToListAsync();
 
-        var result = await _dbContext.Books.Select(x => new BookResponse()
+        var books = await _dbContext.Books.ToListAsync();
+        
+
+        var result = books.Select(x =>
         {
-            Id = x.Id,
-            Title = x.Title,
-            Author = x.Author,
-            Price = x.Price,
-            Contributor = x.contributor,
-            BookImage = x.BookImage,
-            IsFavourite = favouriteBooksIds.Contains(x.Id),
-        }).ToListAsync();
+            var averageRating = CalculateAverageRating(x.Id);
+
+            return new BookResponse()
+            {
+                Id = x.Id,
+                Title = x.Title,
+                Author = x.Author,
+                Price = x.Price,
+                Contributor = x.contributor,
+                BookImage = x.BookImage,
+                IsFavourite = favouriteBooksIds.Contains(x.Id),
+                Rate =  averageRating,
+            };
+        }).ToList();
         
         return Ok(result);
     }
@@ -150,7 +159,7 @@ public class BooksController : ControllerBase
         });
     }
 
-    [HttpPost]
+    [HttpDelete]
     public async Task<IActionResult> RemoveBookFromFavourite([FromBody] RemoveBookFromFavourite removeBookFromFavourite)
     {
         var userId = User.Claims.Select(x => x.Value).FirstOrDefault();
@@ -171,6 +180,44 @@ public class BooksController : ControllerBase
         await _dbContext.SaveChangesAsync();
 
         return Ok();
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> UpdateBookAndBookRateByUser([FromBody] UpdateBook updateBook)
+    {
+        var userId = User.Claims.Select(x => x.Value).FirstOrDefault();
+        var user = await _userManager.FindByEmailAsync(userId);
+        if (user == null)
+        {
+            return BadRequest();
+        }
+        
+        var book = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == updateBook.BookId);
+        var bookRate =
+            await _dbContext.UserFavouriteBooks.FirstOrDefaultAsync(x =>
+                x.BookId == updateBook.BookId && x.UserId == user.Id);
+        if (book == null)
+        {
+            return NotFound();
+        }
+
+        book.Price = updateBook.Price;
+        bookRate.Rate = updateBook.Rate;
+
+        await _dbContext.SaveChangesAsync();
+
+        return Ok(new { Message = "Book updated successfully" });
+        
+    }
+    
+    //we could build a static class for this kind of helper and use across the app
+    private int CalculateAverageRating(int bookId)
+    {
+        var ratings = _dbContext.UserFavouriteBooks
+            .Where(x => x.BookId == bookId)
+            .Select(f => f.Rate);
+
+        return ratings.Any() ? (int)ratings.Average() : 0;
     }
     
 }
