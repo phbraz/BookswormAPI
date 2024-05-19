@@ -24,22 +24,11 @@ public class BooksController : ControllerBase
         _signInManager = signInManager;
     }
 
-    [HttpPost]
-    public async Task<IActionResult> FavouriteBooksByUser([FromBody] LoginModel loginModel)
+    [HttpGet]
+    public async Task<IActionResult> GeBooks()
     {
-        return Ok();
+        var books = await _dbContext.Books.ToListAsync();
+        return Ok(books);
     }
-
-    [HttpPost]
-    public async Task<IActionResult> SaveBookToFavourite([FromBody] SaveBookToFavourite saveBookToFavourite)
-    {
-        var user = await _userManager.FindByEmailAsync(saveBookToFavourite.userEmail);
-        
-        if (user == null)
-        {
-            return BadRequest();
-        }
-        
-        return Ok();
-    }
+    
 }
