@@ -179,7 +179,7 @@ public class BooksController : ControllerBase
         _dbContext.UserFavouriteBooks.Remove(favouriteBook);
         await _dbContext.SaveChangesAsync();
 
-        return Ok();
+        return Ok(new { Message = "Book removed successfully" });
     }
 
     [HttpPut]
