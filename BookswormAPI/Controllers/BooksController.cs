@@ -66,7 +66,8 @@ public class BooksController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> FindBook([FromBody] SearchBook searchBook)
     {
-        var books = await _dbContext.Books.Where(b => b.Title.Contains(searchBook.UserQuery) || b.Author.Contains(searchBook.UserQuery)).ToListAsync();
+        var searchString = ConvertStringToTitleCase(searchBook.UserQuery);
+        var books = await _dbContext.Books.Where(b => b.Title.Contains(searchString) || b.Author.Contains(searchString) || b.contributor.Contains(searchString)).ToListAsync();
         return Ok(books);
     }
 
@@ -107,9 +108,13 @@ public class BooksController : ControllerBase
             return BadRequest();
         }
 
+        var searchInput = ConvertStringToTitleCase(searchBook.UserQuery);
+
         var favouriteBooks = await _dbContext.UserFavouriteBooks.Include(x => x.Book)
-            .Where(x => x.UserId == user.Id && (x.Book.Title.Contains(searchBook.UserQuery) ||
-                                                x.Book.Author.Contains(searchBook.UserQuery)))
+            .Where(x => x.UserId == user.Id 
+                        && (x.Book.Title.Contains(searchInput) 
+                            || x.Book.Author.Contains(searchInput)
+                            || x.Book.contributor.Contains(searchInput)))
             .Select(x => new BookResponse()
             {
                 Id = x.BookId,
@@ -218,6 +223,14 @@ public class BooksController : ControllerBase
             .Select(f => f.Rate);
 
         return ratings.Any() ? (int)ratings.Average() : 0;
+    }
+
+    private string ConvertStringToTitleCase(string searchParam)
+    {
+        var cultureInfo = new System.Globalization.CultureInfo("en-US");
+        var searchInfo = cultureInfo.TextInfo;
+        
+        return searchInfo.ToTitleCase(searchParam.ToLower());
     }
     
 }
